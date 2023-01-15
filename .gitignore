@@ -5,7 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
-
+*.
+dataset-downloader-kit/*
+network/*
+old/* 
+*.DS_Store
 # Distribution / packaging
 .Python
 build/

@@ -1,0 +1,15 @@
+open3d
+numpy 
+p
+pyntcloud
+plyfile
+seaborn
+tqdm
+ipyvtklink
+pyvista
+ai.cs
+opencv-python
+pytorch3d
+torch
+torchvision
+matplotlib
