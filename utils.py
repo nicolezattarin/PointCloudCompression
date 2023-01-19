@@ -156,6 +156,52 @@ def get_images (
     return result
     
 
-    
+def reconstruct_3D(
+        path_to_2d, 
+        theta_range=(-np.pi/4, np.pi/4), 
+        phi_range=(0, 2*np.pi), 
+        pixel_size = (1,1), 
+        save=False,
+        save_path='reconstructed_PC'
+        ):
+    """
+    path_to_2d: path to the 2d representation of the point cloud
+    theta_range: range of theta to consider
+    phi_range: range of phi to consider
+    pixel_size: size of the pixel in degrees
+    save: if true, saves the point cloud as a ply file
+    """
 
+    img = np.loadtxt(path_to_2d)
+
+    pixel_size_rad = (pixel_size[0]*np.pi/180, pixel_size[1]*np.pi/180)
+    phi_grid = np.arange(phi_range[0], phi_range[1]+1, pixel_size_rad[0])
+    theta_grid = np.arange(theta_range[0], theta_range[1]+1, pixel_size_rad[1])
+    # phi x theta
+    # 3D reconstruction of the point cloud
+    cartesian_coordinates = np.zeros((img.shape[0]*img.shape[1], 3))
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            r = img[i, j]
+            phi = phi_grid[i]
+            theta = theta_grid[j]
+            
+            
+            x = r*np.sin(theta)*np.cos(phi)
+            y = r*np.sin(theta)*np.sin(phi)
+            z = r*np.cos(theta)
+
+            cartesian_coordinates[i*img.shape[1] + j, 0] = x
+            cartesian_coordinates[i*img.shape[1] + j, 1] = y
+            cartesian_coordinates[i*img.shape[1] + j, 2] = z
     
+    # create point cloud
+
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(cartesian_coordinates)
+    if save:
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        o3d.io.write_point_cloud( os.path.join(save_path, path_to_2d.split('/')[-1].split('.')[0] + '.ply'), pcd)
+    return pcd

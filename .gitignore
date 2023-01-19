@@ -4,12 +4,23 @@ __pycache__/
 *$py.class
 
 # C extensions
+*.ply
 *.so
 *.
 dataset-downloader-kit/*
 network/*
 old/* 
 *.DS_Store
+2DRepresentation/*
+autoencoder_progress_features/*
+LZW/*
+results/*
+chamfer_distance/*
+tools/*
+pyntcloud_plot_assets/*
+PointNetAutoencoder/dataset_autoencoder_labels/*
+PointNetAutoencoder/dataset-downloader-kit/*
+PointNetAutoencoder/work_dirs/*
 # Distribution / packaging
 .Python
 build/
