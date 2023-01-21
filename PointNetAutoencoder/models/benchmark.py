@@ -28,6 +28,26 @@ class PointNet(nn.Module):
         x, _ = torch.max(x, dim=2)
         return x
 
+class Autoencoder (nn.Module):
+    def __init__(self, gn, in_dim1, in_dim2=2048, fcs=[1024, 1024, 512, 512, 256, 7]):
+        super(Autoencoder, self).__init__()
+        self.in_dim1 = in_dim1
+        self.encoder = PointNet(in_dim=in_dim1, gn=gn)
+        self.decoder = nn.Sequential()
+        for i, out_dim in enumerate(fcs):
+            self.decoder.add_module(f'fc_{i}', nn.Linear(in_dim2, out_dim))
+            if out_dim != 7:
+                if gn:
+                    self.decoder.add_module(f'gn_{i}',nn.GroupNorm(8, out_dim))
+                self.decoder.add_module(f'relu_{i}', nn.ReLU(inplace=True))
+            in_dim2 = out_dim
+        
+    def forward(self, x):
+        encoded = self.encoder(x)
+        out = self.decoder(encoded)
+    
+        return encoded, out
+
 
 class Benchmark(nn.Module):
     def __init__(self, gn, in_dim1, in_dim2=2048, fcs=[1024, 1024, 512, 512, 256, 7]):

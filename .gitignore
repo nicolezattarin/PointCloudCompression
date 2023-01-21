@@ -14,6 +14,10 @@ old/*
 2DRepresentation/*
 autoencoder_progress_features/*
 LZW/*
+PointNetAutoencoder/checkpoints/*
+PointNetAutoencoder/results/*
+PointNetAutoencoder/work_dirs_pred/*
+
 results/*
 chamfer_distance/*
 tools/*

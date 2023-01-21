@@ -23,16 +23,11 @@ def setup_seed(seed):
     np.random.seed(seed)
 
 
-# soppress user warnings
-import warnings
-warnings.filterwarnings("ignore")
 def config_params():
     parser = argparse.ArgumentParser(description='Configuration Parameters')
     ## dataset
     parser.add_argument('--root',help='the data path', default='dataset_final')
-    parser.add_argument('--load', type=bool, default=False,
-                        help='whether to load the trained model')
-    parser.add_argument('--train_npts', type=int,  default=4000,
+    parser.add_argument('--train_npts', type=int,  default=2048,
                         help='the points number of each pc for training')
     ## models training
     parser.add_argument('--seed', type=int, default=1234)
@@ -69,34 +64,40 @@ def compute_loss(ref_cloud, pred_ref_clouds, loss_fn):
         losses.append(discount_factor**(8 - i)*loss)
     return torch.sum(torch.stack(losses))
 
-import sys
 
 @time_calc
 def train_one_epoch(train_loader, model, loss_fn, optimizer):
     losses = []
-    compression_ratios = []
-    for ref_cloud in tqdm(train_loader):
-        ref_cloud = ref_cloud.to(device)
-
+    r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic = [], [], [], [], [], []
+    for ref_cloud, src_cloud, gtR, gtt in tqdm(train_loader):
+        ref_cloud, src_cloud, gtR, gtt = ref_cloud.to(device), src_cloud.to(device), \
+                                         gtR.to(device), gtt.to(device)
         optimizer.zero_grad()
-        encoded, decoded = model(ref_cloud.permute(0,2,1).contiguous())
-
-        loss = loss_fn(ref_cloud.permute(0,2,1).contiguous(), decoded)
-
-        #product shapes normalized over batch_size
-        encoding_size = encoded.shape[1]
-        ref_cloud_size = ref_cloud.shape[1] * ref_cloud.shape[2]
-        
-        compression_ratio = encoding_size / ref_cloud_size
+        R, t, pred_ref_clouds = model(src_cloud.permute(0, 2, 1).contiguous(),
+                                     ref_cloud.permute(0, 2, 1).contiguous())
+        loss = compute_loss(ref_cloud, pred_ref_clouds, loss_fn)
         loss.backward()
         optimizer.step()
 
+        cur_r_mse, cur_r_mae, cur_t_mse, cur_t_mae, cur_r_isotropic, \
+        cur_t_isotropic = compute_metrics(R, t, gtR, gtt)
         losses.append(loss.item())
-        compression_ratios.append(compression_ratio)
-    
+        r_mse.append(cur_r_mse)
+        r_mae.append(cur_r_mae)
+        t_mse.append(cur_t_mse)
+        t_mae.append(cur_t_mae)
+        r_isotropic.append(cur_r_isotropic.cpu().detach().numpy())
+        t_isotropic.append(cur_t_isotropic.cpu().detach().numpy())
+    r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic = \
+        summary_metrics(r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic)
     results = {
         'loss': np.mean(losses),
-        'compression_ratio': np.mean(compression_ratios)
+        'r_mse': r_mse,
+        'r_mae': r_mae,
+        't_mse': t_mse,
+        't_mae': t_mae,
+        'r_isotropic': r_isotropic,
+        't_isotropic': t_isotropic
     }
     return results
 
@@ -105,27 +106,35 @@ def train_one_epoch(train_loader, model, loss_fn, optimizer):
 def test_one_epoch(test_loader, model, loss_fn):
     model.eval()
     losses = []
-    compression_ratios = []
-
+    r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic = [], [], [], [], [], []
     with torch.no_grad():
-        for ref_cloud in tqdm(test_loader):
-            ref_cloud = ref_cloud.to(device)
-            encoded, decoded = model(ref_cloud.permute(0,2,1).contiguous())
-
-            loss = loss_fn(ref_cloud.permute(0,2,1).contiguous(), decoded)
-
-            #product shapes normalized over batch_size
-            encoding_size = encoded.shape[1]
-            ref_cloud_size = ref_cloud.shape[1] * ref_cloud.shape[2]
-            
-            compression_ratio = encoding_size / ref_cloud_size
+        for ref_cloud, src_cloud, gtR, gtt in tqdm(test_loader):
+            ref_cloud, src_cloud, gtR, gtt = ref_cloud.to(device), src_cloud.to(device), \
+                                             gtR.to(device), gtt.to(device)
+            R, t, pred_ref_clouds = model(src_cloud.permute(0, 2, 1).contiguous(),
+                                         ref_cloud.permute(0, 2, 1).contiguous())
+            loss = compute_loss(ref_cloud, pred_ref_clouds, loss_fn)
+            cur_r_mse, cur_r_mae, cur_t_mse, cur_t_mae, cur_r_isotropic, \
+            cur_t_isotropic = compute_metrics(R, t, gtR, gtt)
 
             losses.append(loss.item())
-            compression_ratios.append(compression_ratio) 
+            r_mse.append(cur_r_mse)
+            r_mae.append(cur_r_mae)
+            t_mse.append(cur_t_mse)
+            t_mae.append(cur_t_mae)
+            r_isotropic.append(cur_r_isotropic.cpu().detach().numpy())
+            t_isotropic.append(cur_t_isotropic.cpu().detach().numpy())
     model.train()
+    r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic = \
+        summary_metrics(r_mse, r_mae, t_mse, t_mae, r_isotropic, t_isotropic)
     results = {
         'loss': np.mean(losses),
-        'compression_ratio': np.mean(compression_ratios)
+        'r_mse': r_mse,
+        'r_mae': r_mae,
+        't_mse': t_mse,
+        't_mae': t_mae,
+        'r_isotropic': r_isotropic,
+        't_isotropic': t_isotropic
     }
     return results
 
@@ -144,7 +153,7 @@ def main():
     checkpoints_path = os.path.join(args.saved_path, 'checkpoints')
     if not os.path.exists(checkpoints_path):
         os.makedirs(checkpoints_path)
-    
+
     train_set = CustomData(args.root, args.train_npts)
     test_set = CustomData(args.root, args.train_npts, False)
     train_loader = DataLoader(train_set, batch_size=args.batchsize,
@@ -161,11 +170,10 @@ def main():
     model_paths = glob.glob(os.path.join(checkpoints_path, 'model_*.pth'))
     model_paths.sort()
     epochs = [int(path.split('_')[-1].split('.')[0]) for path in model_paths]
-    start_epoch = max(epochs) if len(epochs) > 0 else 0
-    from autoencoder import Autoencoder
-    # model = Autoencoder(in_dim=args.in_dim,  gn = args.gn)
-    model = Autoencoder()
-    if len(model_paths) > 0 and args.load:
+    start_epoch = max(epochs)+1 if len(epochs) > 0 else 0
+    model = IterativeBenchmark(in_dim=args.in_dim, niters=args.niters, gn = args.gn)
+
+    if len(model_paths) > 0:
         model_path = os.path.join(checkpoints_path, 'model_{}.pth'.format(start_epoch))
         print('load model from {}'.format(model_path))
         model.load_state_dict(torch.load(model_path))
@@ -188,52 +196,50 @@ def main():
 
     
 
+    # writer = SummaryWriter(summary_path)
+    writer ={'Loss/train': [], 'Loss/test': [], 'RError/train': [], 'RError/test': [],
+                    'TError/train': [], 'TError/test':[] }
 
-    test_min_loss  = float('inf')
-    import pandas as pd
-    train_results_all = pd.DataFrame(columns=['loss', 'compratio'])
-    test_results_all = pd.DataFrame(columns=['loss', 'compratio'])
-
-    # save loss and compression ratio
-    if not os.path.exists(os.path.join(checkpoints_path, 'results')):
-        os.makedirs(os.path.join(checkpoints_path, 'results'))
-
-    # load results if exists
-    if os.path.exists(os.path.join(checkpoints_path, 'results', 'train_results_all.csv')):
-        train_results_all = pd.read_csv(os.path.join(checkpoints_path, 'results', 'train_results_all.csv'))
-        test_results_all = pd.read_csv(os.path.join(checkpoints_path, 'results', 'test_results_all.csv'))
-        print('load results from {}'.format(os.path.join(checkpoints_path, 'results')))
-        print('start from epoch {}'.format(start_epoch))
-        max_epoch = args.epoches
-        print ('max epoch', max_epoch)
-
+    test_min_loss, test_min_r_mse_error, test_min_rot_error = \
+        float('inf'), float('inf'), float('inf')
     for epoch in range(start_epoch, max_epoch):
         print('=' * 20, epoch + 1, '=' * 20)
         train_results = train_one_epoch(train_loader, model, loss_fn, optimizer)
+        print_train_info(train_results)
         test_results = test_one_epoch(test_loader, model, loss_fn)
-        print('train loss: {:.4f}, train compratio: {:.4f}'.format(train_results['loss'], train_results['compression_ratio']))
+        print_train_info(test_results)
 
-        # save loss and compression ratio
-        train_results_all = pd.concat([train_results_all, pd.DataFrame(train_results, index=[0])], ignore_index=True)
-        test_results_all = pd.concat([test_results_all, pd.DataFrame(test_results, index=[0])], ignore_index=True)
-        
-        test_loss = test_results['loss']
+        if epoch % args.saved_frequency == 0:
+            torch.save(model.state_dict(), os.path.join(checkpoints_path,
+                                                        'model_{}.pth'.format(epoch)))
+            writer ['Loss/train'] += [train_results['loss']]
+            writer ['Loss/test'] += [test_results['loss']]
+            writer ['RError/train'] += [train_results['r_mse']]
+            writer ['RError/test'] += [test_results['r_mse']]
 
-        test_min_loss = min(test_min_loss, test_loss)
+        test_loss, test_r_error, test_rot_error = \
+            test_results['loss'], test_results['r_mse'], test_results[
+                'r_isotropic']
         if test_loss < test_min_loss:
             saved_path = os.path.join(checkpoints_path, "test_min_loss.pth")
             torch.save(model.state_dict(), saved_path)
             test_min_loss = test_loss
-        
-        saved_path = os.path.join(checkpoints_path, "model_{}.pth".format(epoch))
-        torch.save(model.state_dict(), saved_path)
-
-
+        if test_r_error < test_min_r_mse_error:
+            saved_path = os.path.join(checkpoints_path,
+                                      "test_min_rmse_error.pth")
+            torch.save(model.state_dict(), saved_path)
+            test_min_r_mse_error = test_r_error
+        if test_rot_error < test_min_rot_error:
+            saved_path = os.path.join(checkpoints_path,
+                                      "test_min_rot_error.pth")
+            torch.save(model.state_dict(), saved_path)
+            test_min_rot_error = test_rot_error
         scheduler.step()
+    # save writer
+    import pickle
+    with open(os.path.join(summary_path, 'writer.pkl'), 'wb') as f:
+        pickle.dump(writer, f)
 
-
-        train_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'train_results_all.csv'))
-        test_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'test_results_all.csv'))
 
 
 if __name__ == '__main__':

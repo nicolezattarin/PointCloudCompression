@@ -2,8 +2,7 @@ import numpy as np
 import os
 import torch
 from torch.utils.data import Dataset
-import sys
-sys.path.append('../utils')
+
 from utils import readpcd
 from utils import pc_normalize, random_select_points, shift_point_cloud, \
     jitter_point_cloud, generate_random_rotation_matrix, \
@@ -11,16 +10,18 @@ from utils import pc_normalize, random_select_points, shift_point_cloud, \
 
 
 class CustomData(Dataset):
-    def __init__(self, root, npts, train=True):
+    def __init__(self, root, npts, train=True,  nfiles=None):
         super(CustomData, self).__init__()
         dirname = 'train_data' if train else 'val_data'
         path = os.path.join(root, dirname)
         self.train = train
+
         self.files = [os.path.join(path, item) for item in sorted(os.listdir(path))]
-
-        # remove empty files
-        self.files = [item for item in self.files if readpcd(item, rtype='npy').shape[0] > 0]
-
+        if nfiles is not None:
+            self.files = self.files[:nfiles]
+            
+        # only if point cloud is not empty
+        self.files = [item for item in self.files if readpcd(item).has_points()]
         self.npts = npts
 
     def __getitem__(self, item):
@@ -28,13 +29,8 @@ class CustomData(Dataset):
         ref_cloud = readpcd(file, rtype='npy')
         ref_cloud = random_select_points(ref_cloud, m=self.npts)
         ref_cloud = pc_normalize(ref_cloud)
-        R, t = generate_random_rotation_matrix(-20, 20), \
-               generate_random_tranlation_vector(-0.5, 0.5)
-        src_cloud = transform(ref_cloud, R, t)
-        if self.train:
-            ref_cloud = jitter_point_cloud(ref_cloud)
-            src_cloud = jitter_point_cloud(src_cloud)
-        return ref_cloud, src_cloud, R, t
-
+       
+        return ref_cloud
+        
     def __len__(self):
         return len(self.files)
