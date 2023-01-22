@@ -9,11 +9,19 @@ This project aims to provide an implementation of Point Cloud Compression (PCC) 
 </p>
 
 ## Dataset
-The dataset is the [SELMA](https://scanlab.dei.unipd.it/selma-dataset/) dataset, which is made by data collected by of 3 LIDARs located on a vehicle in a urban scenario.
+The dataset is the [SELMA](https://scanlab.dei.unipd.it/selma-dataset/) dataset, which is made by data collected by of 3 LIDARs located on a vehicle in a urban scenario. 
+The location of the sensors is the following:
 
 <p align="center">
   <img src="imgs/sensors.png" width="700" title="Dataset">
 </p>
+
+An example of the dataset is shown in the figure below:
+
+<p align="center">
+  <img src="readme_imgs/red.png" width="700" title="Dataset">
+</p>
+
 
 The point clouds are segmented in different clsses, widely discussed [here](https://scanlab.dei.unipd.it/selma-dataset/).
 
@@ -47,14 +55,25 @@ The training is done on 400 Point clouds  of each class, and the test is done on
   <img src="readme_imgs/train.png" width="800" title="Dataset">
 </p>
 
+Some examples of the reconstruction are the following:
 
-### 4) **2D Projection** []
+<p align="center">
+  <img src="readme_imgs/rec.png" width="800" title="Dataset">
+</p>
+
+
+### 4) **2D Projection** [3][4]
+Finally, we propose to change the coordinate system of the point cloud from cartesian to spherical and then project the point cloud on a 2D plane, whith a specific grid size. Some examples are the following:
+
+<p align="center">
+  <img src="readme_imgs/img.png" width="600" title="Dataset">
+</p>
 
 
 ### References
 
 <p align="center">
-  <img src="readme_imgs/ref.png" width="700" title="Dataset">
+  <img src="readme_imgs/ref.png" width="500" title="Dataset">
 </p>
 
 
