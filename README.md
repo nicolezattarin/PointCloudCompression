@@ -18,7 +18,8 @@ The dataset is the [SELMA](https://scanlab.dei.unipd.it/selma-dataset/) dataset,
 The point clouds are segmented in different clsses, widely discussed [here](https://scanlab.dei.unipd.it/selma-dataset/).
 
 ## Strategies 
-* 1) **DRACO** [2] is a compression library for 3D geometric meshes and point clouds. It is based on the Google Draco library, which is a general-purpose 3D geometry compression library.
+### **DRACO** [2] 
+is a compression library for 3D geometric meshes and point clouds. It is based on the Google Draco library, which is a general-purpose 3D geometry compression library.
 
 <p align="center">
   <img src="readme_imgs/draco.png" width="600" title="Dataset">
