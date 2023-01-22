@@ -19,7 +19,7 @@ The location of the sensors is the following:
 An example of the dataset is shown in the figure below:
 
 <p align="center">
-  <img src="readme_imgs/red.png" width="700" title="Dataset">
+  <img src="readme_imgs/ref.png" width="700" title="Dataset">
 </p>
 
 
