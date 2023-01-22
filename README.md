@@ -1,7 +1,7 @@
 # PointCloudCompression
  
 This project aims to provide an implementation of Point Cloud Compression (PCC) methods for segmented point clouds. 
-Developed together with [Saverio Cavasin](@SvrCvs)
+Developed together with Saverio Cavasin (@SvrCvs)
 ## Task 
 
 <p align="center">
