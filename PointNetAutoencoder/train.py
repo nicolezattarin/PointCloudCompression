@@ -30,7 +30,7 @@ def config_params():
     parser = argparse.ArgumentParser(description='Configuration Parameters')
     ## dataset
     parser.add_argument('--root',help='the data path', default='dataset_final')
-    parser.add_argument('--load', type=bool, default=False,
+    parser.add_argument('--load', type=bool, default=True,
                         help='whether to load the trained model')
     parser.add_argument('--train_npts', type=int,  default=4000,
                         help='the points number of each pc for training')
@@ -231,9 +231,8 @@ def main():
 
         scheduler.step()
 
-
-        train_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'train_results_all.csv'))
-        test_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'test_results_all.csv'))
+        train_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'train_results_all.csv'), index=False)
+        test_results_all.to_csv(os.path.join(checkpoints_path, 'results', 'test_results_all.csv'), index=False)
 
 
 if __name__ == '__main__':

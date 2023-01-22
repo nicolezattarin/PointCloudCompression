@@ -71,7 +71,6 @@ class Autoencode_1 (nn.Module):
 
 
 from torch import nn
-
 class Autoencoder(nn.Module):
     def linear_block_en(self, flatten_dim, out_dims=[32, 16, 8]):
         layers = []
