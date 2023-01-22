@@ -1,7 +1,7 @@
 # PointCloudCompression
  
 This project aims to provide an implementation of Point Cloud Compression (PCC) methods for segmented point clouds. 
-
+Developed together with [Saverio Cavasin](@SvrCvs)
 ## Task 
 
 <p align="center">
@@ -19,7 +19,7 @@ The location of the sensors is the following:
 An example of the dataset is shown in the figure below:
 
 <p align="center">
-  <img src="readme_imgs/ref.png" width="700" title="Dataset">
+  <img src="readme_imgs/pc.png" width="700" title="Dataset">
 </p>
 
 
