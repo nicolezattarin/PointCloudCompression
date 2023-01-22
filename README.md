@@ -21,13 +21,13 @@ The point clouds are segmented in different clsses, widely discussed [here](http
 1) ### DRACO [2] is a compression library for 3D geometric meshes and point clouds. It is based on the Google Draco library, which is a general-purpose 3D geometry compression library.
 
 <p align="center">
-  <img src="readme_imgs/draco.png" width="800" title="Dataset">
+  <img src="readme_imgs/draco.png" width="600" title="Dataset">
 </p>
 
 2) ### DBScan [3] is a density-based clustering algorithm. It is a popular algorithm for clustering in a spatial context. The algorithm groups together points that are closely packed together (points with many nearby neighbors), marking as outliers points that lie alone in low-density regions (whose nearest neighbors are too far away).
 
 <p align="center">
-  <img src="readme_imgs/dbscan.png" width="800" title="Dataset">
+  <img src="readme_imgs/dbscan.png" width="600" title="Dataset">
 </p>
 
 3) ### Convolutional Autoencoder [4], trained to learn a representation (encoding) of a sample, with the lower possible loss in the reconstruction of the input data. 
@@ -37,16 +37,11 @@ The network is composed by an encoder and a decoder. The encoder compresses the 
   <img src="readme_imgs/net.png" width="300" title="Dataset">
 </p>
 
-We train an Autoencoder for a subset of classes of the SELMA dataset, in order to end up with an ensable of Autoencoders, one for each class.
-
-<p align="center">
-  <img src="readme_imgs/ae.png" width="800" title="Dataset">
-</p>
 
 The training is done on 400 Point clouds  of each class, and the test is done on 100 point clouds of each class. The results are the following:
 
 <p align="center">
-  <img src="readme_imgs/ae_res.png" width="800" title="Dataset">
+  <img src="readme_imgs/train.png" width="800" title="Dataset">
 </p>
 
 
