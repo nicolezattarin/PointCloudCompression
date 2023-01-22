@@ -2,4 +2,4 @@
  
 Project 
 
-<embed src="loss.pdf" type="application/pdf">
+<embed src="imgs/label_0.pdf" type="application/pdf">
