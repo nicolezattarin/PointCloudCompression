@@ -48,5 +48,13 @@ The training is done on 400 Point clouds  of each class, and the test is done on
 </p>
 
 
-### 4) **2D Projection** [1]
+### 4) **2D Projection** []
+
+
+### References
+
+<p align="center">
+  <img src="readme_imgs/ref.png" width="700" title="Dataset">
+</p>
+
 
